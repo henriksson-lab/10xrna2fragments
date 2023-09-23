@@ -122,11 +122,11 @@ public class BamToFragments {
 		System.out.println("This software takes 10x rnaseq and produces a 10x-like fragment file.");
 		System.out.println("Thus they can be analyzed using single-cell workflows (such as signac or archr)");
 		System.out.println();
-		System.out.println("java -jar bam2fragments.jar ");
+		System.out.println("java -jar bam2fragments.jar gex_possorted_bam.bam gex_fragments.tsv");
 		System.out.println();
-		System.out.println("Sort it: ");
-		System.out.println("Compress it: bgzip -@ 8 -i atac_fragments.tsv");
-		//System.out.println("Index it: tabix -p vcf atac_fragments.tsv.gz");
+		System.out.println("Sort it: sort -k 1,1 -k2,2n gex_fragments.tsv > gex_fragments.sorted.tsv");
+		System.out.println("Compress it: bgzip -@ 8 gex_fragments.sorted.tsv");
+		System.out.println("Index it: tabix -p vcf gex_fragments.sorted.tsv.gz");
 		System.exit(0);
 	}
 	
