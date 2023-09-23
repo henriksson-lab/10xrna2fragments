@@ -88,7 +88,7 @@ public class BamToFragments {
 
 							
 							pw.println(blockSource+"\t"+blockFrom+"\t"+blockTo+"\t"+bcCellCurrentCellBarcode+"\t1");
-							
+							keptRecords++;
 							
 						}
 						
