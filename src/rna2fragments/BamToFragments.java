@@ -14,11 +14,27 @@ import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SamReader;
 import htsjdk.samtools.SamReaderFactory;
 
+/**
+ * 
+ * Main class
+ * 
+ */
 public class BamToFragments {
 	
 	
+	public static String getUMI(SAMRecord samRecord) {
+		return (String)samRecord.getAttribute("UB");
+
+
+		//Note: this is the name of a Parse Bioscience's read:
+		//01_01_35__T__1_1_35__CATTCCTA_AACGTGAT_CATACCAA__TTCGCTCCAA__241218IC__OH_@LH00202:171:22JJK7LT4:3:2208:30933:24827
+		//UMI is thus part of the name, but it is not a tag!
+		
+	}
+	
 	public static void read(File fBAM, PrintWriter pw) throws IOException {
 
+		
 		
 
 		//Open the BAM file and get to work
@@ -32,6 +48,7 @@ public class BamToFragments {
 		int unalignedRecord=0;
 		int skippedDup=0;
 		int skippedWrongBC=0;
+		int keptBlocks=0;
 
 		
 		//This is to keep track of duplicates.
@@ -45,17 +62,18 @@ public class BamToFragments {
 			if(readRecords%1000000 == 0){
 				
 				System.out.println(
-						"Kept/Read: "+keptRecords+"/"+readRecords+
+						"Kept rec/Read rec: "+keptRecords+"/"+readRecords+
 						"  @sequence: "+currentSource+
 						"  BadBC: "+skippedWrongBC+
 						"  Unaligned: "+unalignedRecord+
+						"  Blocks written: "+keptBlocks+
 						"  SkipDup: "+skippedDup);
 
 				
 			}
 
 			//Get UMI and BC for this read
-			String bcCellCurrentUMI=(String)samRecord.getAttribute("UB");
+			String bcCellCurrentUMI=getUMI(samRecord);
 			String bcCellCurrentCellBarcode=(String)samRecord.getAttribute("CB");
 				
 			//If the read has no BC then ignore it
@@ -88,9 +106,10 @@ public class BamToFragments {
 
 							
 							pw.println(blockSource+"\t"+blockFrom+"\t"+blockTo+"\t"+bcCellCurrentCellBarcode+"\t1");
-							keptRecords++;
+							keptBlocks++;
 							
 						}
+						keptRecords++;
 						
 					} else {
 						//Unaligned read
@@ -119,12 +138,15 @@ public class BamToFragments {
 	
 	
 	public static void printHelp() {
-		System.out.println("This software takes 10x rnaseq and produces a 10x-like fragment file.");
-		System.out.println("Thus they can be analyzed using single-cell workflows (such as signac or archr)");
+		System.out.println("This software takes aligned 10x or Parse Biosceinces RNA-seq data and produces a 10x-style ATAC fragment file.");
+		System.out.println("Thus they can be analyzed using single-cell workflows (such as Signac or ArchR).");
+		System.out.println("Note that for UMI-deduplication to work, the input file must be position sorted. Only naive deduplication will be performed.");
 		System.out.println();
-		System.out.println("java -jar 10xrna2fragments.jar gex_possorted_bam.bam gex_fragments.tsv");
+		System.out.println("java -jar rna2fragments.jar gex_possorted_bam.bam  output_gex_fragments.tsv");
 		System.out.println();
-		System.out.println("Sort it: sort -k 1,1 -k2,2n gex_fragments.tsv > gex_fragments.sorted.tsv");
+		System.out.println("Sort it: sort -k 1,1 -k2,2n output_gex_fragments.tsv > gex_fragments.sorted.tsv");
+		//// Note: need natural order or something? test again
+		
 		System.out.println("Compress it: bgzip -@ 8 gex_fragments.sorted.tsv");
 		System.out.println("Index it: tabix -p vcf gex_fragments.sorted.tsv.gz");
 		System.exit(0);
